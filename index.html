@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Manager — ERP ka chacha | Never worry about attendance again</title>
+<meta name="description" content="A free Chrome extension for KIET students. Bunker calculator, auto-sync, disputed absences and per-subject targets. No backend, no account, all data stays on your laptop.">
+<meta name="theme-color" content="#3b82f6">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Attendance Manager — ERP ka chacha">
+<meta property="og:description" content="Never worry about attendance again. A free, privacy-first Chrome extension that does the bunker math for you.">
+<meta property="og:image" content="https://placehold.co/1200x630/3b82f6/ffffff?text=Attendance+Manager">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M18 33l9 9 19-19' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<style>
+  :root{
+    --blue:#3b82f6;
+    --purple:#8b5cf6;
+    --violet:#7c3aed;
+    --indigo:#6366f1;
+    --grad:linear-gradient(135deg,#3b82f6 0%,#6366f1 45%,#8b5cf6 100%);
+    --ink:#0f172a;
+    --muted:#5b6b85;
+    --muted-2:#94a3b8;
+    --line:#e6ebf4;
+    --shadow-sm:0 1px 2px rgba(15,23,42,.05),0 8px 20px -12px rgba(15,23,42,.14);
+    --header-h:72px;
+    --font-body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-display:'Sora','Plus Jakarta Sans',system-ui,sans-serif;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 16px);-webkit-text-size-adjust:100%}
+  body{
+    margin:0;font-family:var(--font-body);font-size:16px;line-height:1.6;
+    color:var(--ink);background:#fff;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.025em;line-height:1.15;margin:0}
+  p{margin:0}
+  ul,ol{margin:0;padding:0;list-style:none}
+  a{color:inherit}
+  img{max-width:100%}
+  button{font-family:inherit}
+  ::selection{background:rgba(139,92,246,.25);color:#1e1b4b}
+  :focus-visible{outline:3px solid rgba(139,92,246,.5);outline-offset:3px;border-radius:6px}
+
+  .container{width:100%;max-width:1120px;margin:0 auto;padding:0 24px}
+  .skip-link{
+    position:absolute;left:16px;top:-60px;z-index:300;
+    background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;
+    font-size:.85rem;font-weight:700;text-decoration:none;transition:top .2s;
+  }
+  .skip-link:focus{top:12px}
+  .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .js .reveal{opacity:0;transform:translateY(18px);transition:opacity .65s cubic-bezier(.2,.65,.3,1),transform .65s cubic-bezier(.2,.65,.3,1)}
+  .js .reveal.in{opacity:1;transform:none}
+
+  .site-header{
+    position:sticky;top:0;z-index:100;
+    background:rgba(255,255,255,.78);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);
+    backdrop-filter:saturate(180%) blur(16px);
+    border-bottom:1px solid rgba(15,23,42,.06);
+    transition:box-shadow .25s ease;
+  }
+  .site-header.scrolled{box-shadow:0 12px 30px -22px rgba(15,23,42,.45)}
+  .header-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;height:var(--header-h)}
+  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink);flex:none}
+  .brand-mark{
+    width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+    background:var(--grad);color:#fff;flex:none;
+    box-shadow:0 8px 18px -8px rgba(79,70,229,.7);
+  }
+  .brand-mark svg{width:22px;height:22px}
+  .brand-text{display:flex;flex-direction:column;line-height:1.05}
+  .brand-text strong{font-family:var(--font-display);font-size:.97rem;font-weight:700;letter-spacing:-.02em}
+  .brand-text small{font-size:.64rem;font-weight:800;color:var(--purple);letter-spacing:.11em;text-transform:uppercase;margin-top:4px}
+
+  .nav{display:flex;align-items:center;gap:26px}
+  .nav a:not(.btn){
+    position:relative;text-decoration:none;font-size:.9rem;font-weight:600;color:#475569;
+    padding:6px 0;transition:color .2s;
+  }
+  .nav a:not(.btn)::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:2px;
+    background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .25s ease;
+  }
+  .nav a:not(.btn):hover,.nav a:not(.btn).active{color:var(--violet)}
+  .nav a:not(.btn):hover::after,.nav a:not(.btn).active::after{transform:scaleX(1)}
+
+  .menu-toggle{
+    display:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .menu-toggle:hover{border-color:#d8d2fb;box-shadow:var(--shadow-sm)}
+  .menu-toggle span{display:block;width:18px;height:2px;border-radius:2px;background:#334155;transition:transform .25s ease,opacity .2s ease}
+  .menu-toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .menu-toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
+  .menu-toggle[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    font-family:var(--font-body);font-weight:700;font-size:.95rem;
+    padding:14px 24px;border-radius:12px;border:1px solid transparent;
+    text-decoration:none;cursor:pointer;white-space:nowrap;
+    transition:transform .2s ease,box-shadow .25s ease,border-color .2s ease,color .2s ease,background-position .3s ease;
+  }
+  .btn svg{width:18px;height:18px;flex:none}
+  .btn-primary{
+    background:var(--grad);background-size:160% 160%;background-position:0 0;color:#fff;
+    box-shadow:0 12px 26px -12px rgba(79,70,229,.75);
+  }
+  .btn-primary:hover{transform:translateY(-2px);background-position:100% 0;box-shadow:0 18px 34px -14px rgba(79,70,229,.8)}
+  .btn-primary:active{transform:translateY(0)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line);box-shadow:var(--shadow-sm)}
+  .btn-ghost:hover{transform:translateY(-2px);border-color:#c4b5fd;color:var(--violet)}
+  .btn-lg{padding:17px 30px;font-size:1rem;border-radius:14px;letter-spacing:.06em}
+  .btn-sm{padding:9px 16px;font-size:.85rem;border-radius:10px;letter-spacing:.01em}
+
+  .hero{
+    position:relative;overflow:hidden;padding:78px 0 92px;
+    background:
+      radial-gradient(900px 540px at 10% -12%,rgba(59,130,246,.18),transparent 62%),
+      radial-gradient(820px 520px at 92% -4%,rgba(139,92,246,.22),transparent 62%),
+      linear-gradient(180deg,#f6f9ff 0%,#ffffff 78%);
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:radial-gradient(rgba(99,102,241,.22) 1px,transparent 1px);
+    background-size:22px 22px;
+    -webkit-mask-image:radial-gradient(ellipse 65% 62% at 50% 0%,#000 15%,transparent 78%);
+    mask-image:radial-gradient(ellipse 65% 62% at 50% 0%,#000 15%,transparent 78%);
+  }
+  .hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.04fr .96fr;align-items:center;gap:56px}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.78rem;font-weight:700;color:#4c1d95;
+    background:rgba(139,92,246,.09);border:1px solid rgba(139,92,246,.22);
+    padding:7px 13px;border-radius:999px;
+  }
+  .hero-badge svg{width:14px;height:14px;color:var(--violet)}
+  .hero h1{margin-top:22px;font-size:clamp(2.7rem,6.4vw,4.45rem);line-height:1.02;letter-spacing:-.045em;font-weight:800}
+  .tagline{margin-top:20px;font-size:clamp(1.15rem,2.4vw,1.42rem);font-weight:600;color:#334155;letter-spacing:-.01em}
+  .hero-lead{margin-top:14px;max-width:530px;color:var(--muted);font-size:1.02rem;line-height:1.7}
+  .hero-actions{display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:20px;font-size:.8rem;font-weight:600;color:#64748b}
+  .hero-meta span{display:inline-flex;align-items:center;gap:6px}
+  .hero-meta span::before{content:"";width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple))}
+  .trust{display:flex;flex-wrap:wrap;gap:12px 22px;margin-top:28px}
+  .trust li{display:flex;align-items:center;gap:7px;font-size:.83rem;font-weight:600;color:#475569}
+  .trust svg{width:16px;height:16px;color:#10b981;flex:none}
+  .hero-visual{position:relative;z-index:1;padding:10px 0}
+  .hero-visual::before{
+    content:"";position:absolute;inset:auto -30px -40px auto;width:300px;height:300px;
+    background:radial-gradient(circle,rgba(139,92,246,.35),transparent 65%);
+    filter:blur(26px);z-index:0;pointer-events:none;
+  }
+  .hero-shot{
+    position:relative;z-index:2;display:block;
+    width:100%;max-width:400px;height:auto;margin-left:auto;
+    border-radius:26px;border:1px solid rgba(255,255,255,.85);background:#fff;
+    box-shadow:0 44px 80px -34px rgba(49,46,129,.55),0 16px 34px -20px rgba(15,23,42,.24);
+    animation:cardFloat 7s ease-in-out infinite;
+  }
+  @keyframes cardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  .section{padding:88px 0}
+  .section-soft{
+    background:linear-gradient(180deg,#f7f9ff 0%,#fbf7ff 100%);
+    border-top:1px solid #eef1fa;border-bottom:1px solid #eef1fa;
+  }
+  #key-features.section-soft{
+    border-top:0;
+    background:linear-gradient(180deg,#fff 0%,#f7f9ff 26%,#fbf7ff 100%);
+  }
+  .section-head{max-width:680px;margin:0 auto 50px;text-align:center}
+  .eyebrow{
+    display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.18em;
+    text-transform:uppercase;color:#4f46e5;
+    background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.16);
+    padding:6px 12px;border-radius:999px;
+  }
+  .section-head h2{margin-top:16px;font-size:clamp(1.75rem,3.7vw,2.5rem);font-weight:800;letter-spacing:-.035em}
+  .section-head p{margin-top:14px;color:var(--muted);font-size:1.01rem;line-height:1.7}
+
+  #key-features .section-head{margin-bottom:30px}
+  .pro-tip{
+    max-width:820px;margin:0 auto 36px;padding:16px 24px;
+    text-align:center;font-size:.92rem;line-height:1.65;font-weight:500;color:#3730a3;
+    background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.11));
+    border:1px solid rgba(99,102,241,.22);border-radius:16px;
+    box-shadow:0 14px 30px -24px rgba(49,46,129,.4);
+  }
+  .pro-tip strong{font-weight:800;color:#312e81}
+
+  .key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+  .key-card{
+    position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:22px;
+    padding:28px 26px;box-shadow:var(--shadow-sm);
+    transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;
+  }
+  .key-card::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(340px 200px at 100% 0%,rgba(139,92,246,.13),transparent 70%);
+    transition:opacity .3s ease;
+  }
+  .key-card::after{
+    content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--grad);
+    transform:scaleX(0);transform-origin:left;transition:transform .35s ease;
+  }
+  .key-card:hover{transform:translateY(-6px);border-color:#d8d2fb;box-shadow:0 30px 54px -30px rgba(49,46,129,.45)}
+  .key-card:hover::before{opacity:1}
+  .key-card:hover::after{transform:scaleX(1)}
+  .key-icon{
+    position:relative;z-index:1;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+    font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;
+    font-size:1.55rem;line-height:1;margin-bottom:20px;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 10px 22px -14px rgba(49,46,129,.5),inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  .k-blue{background:linear-gradient(135deg,#dbeafe,#eef4ff)}
+  .k-violet{background:linear-gradient(135deg,#ede9fe,#f5f3ff)}
+  .k-amber{background:linear-gradient(135deg,#fef3c7,#fffbeb)}
+  .k-pink{background:linear-gradient(135deg,#fce7f3,#fdf2f8)}
+  .k-teal{background:linear-gradient(135deg,#ccfbf1,#f0fdfa)}
+  .k-indigo{background:linear-gradient(135deg,#e0e7ff,#eef2ff)}
+  .key-num{
+    position:absolute;top:26px;right:26px;z-index:1;
+    font-family:var(--font-display);font-size:.7rem;font-weight:800;letter-spacing:.08em;
+    color:#cbd5e1;transition:color .3s ease;
+  }
+  .key-card:hover .key-num{color:#a78bfa}
+  .key-card h3{position:relative;z-index:1;font-size:1.06rem;font-weight:700;letter-spacing:-.02em}
+  .key-card p{position:relative;z-index:1;margin-top:9px;font-size:.92rem;line-height:1.68;color:var(--muted)}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+  .step{
+    background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;
+    box-shadow:var(--shadow-sm);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+  }
+  .step:hover{transform:translateY(-4px);border-color:#dcd6fb;box-shadow:0 24px 42px -26px rgba(49,46,129,.38)}
+  .num{
+    width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px;
+    background:var(--grad);color:#fff;font-family:var(--font-display);font-size:1rem;font-weight:800;
+    box-shadow:0 10px 22px -10px rgba(79,70,229,.75);
+  }
+  .step h3{font-size:1rem;font-weight:700}
+  .step p{margin-top:9px;font-size:.9rem;line-height:1.66;color:var(--muted)}
+  .code{
+    display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.8em;font-weight:600;background:#f1f5ff;border:1px solid #dbe4ff;
+    color:#3730a3;padding:2px 7px;border-radius:6px;white-space:nowrap;
+  }
+  .tip{
+    display:flex;align-items:flex-start;gap:12px;margin-top:24px;
+    background:linear-gradient(90deg,rgba(59,130,246,.07),rgba(139,92,246,.08));
+    border:1px dashed #c7d2fe;border-radius:14px;padding:16px 18px;
+    font-size:.9rem;line-height:1.65;color:#3730a3;
+  }
+  .tip svg{width:20px;height:20px;flex:none;margin-top:2px;color:#6366f1}
+
+  .privacy-panel{
+    position:relative;overflow:hidden;border-radius:28px;
+    padding:clamp(34px,5vw,62px);
+    background:
+      radial-gradient(620px 320px at 88% -6%,rgba(139,92,246,.62),transparent 62%),
+      radial-gradient(520px 320px at 0% 108%,rgba(59,130,246,.45),transparent 62%),
+      linear-gradient(135deg,#0b1226 0%,#151a3d 55%,#241b4d 100%);
+    color:#fff;box-shadow:0 36px 70px -34px rgba(30,27,75,.65);
+  }
+  .privacy-panel::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 0%,#000,transparent 78%);
+    mask-image:radial-gradient(ellipse 80% 80% at 50% 0%,#000,transparent 78%);
+  }
+  .privacy-panel::after{
+    content:"";position:absolute;right:-90px;bottom:-120px;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(139,92,246,.4),transparent 68%);filter:blur(16px);pointer-events:none;
+  }
+  .privacy-content{position:relative;z-index:1;max-width:760px;margin:0 auto;text-align:center}
+  .eyebrow-dark{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#c7d2fe}
+  .lock-tile{
+    width:62px;height:62px;border-radius:18px;display:grid;place-items:center;margin:0 auto 22px;
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.2);
+    color:#c4b5fd;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .lock-tile svg{width:28px;height:28px}
+  .privacy-content h2{margin-top:16px;font-size:clamp(1.8rem,3.8vw,2.45rem);font-weight:800;color:#fff;letter-spacing:-.035em}
+  .privacy-statement{margin-top:18px;font-size:clamp(1.02rem,2vw,1.16rem);line-height:1.75;color:rgba(255,255,255,.84)}
+  .privacy-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:26px}
+  .privacy-chips li{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:.79rem;font-weight:600;color:#e0e7ff;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+    padding:7px 13px;border-radius:999px;
+  }
+  .privacy-chips svg{width:14px;height:14px;color:#a5b4fc;flex:none}
+  .support-card{
+    display:grid;grid-template-columns:220px 1fr;align-items:center;gap:42px;
+    max-width:900px;margin:0 auto;padding:40px;
+    background:#fff;border:1px solid var(--line);border-radius:26px;
+    box-shadow:0 30px 60px -34px rgba(49,46,129,.4);
+  }
+  .qr-frame{
+    width:fit-content;padding:12px;border-radius:22px;background:var(--grad);
+    box-shadow:0 16px 34px -18px rgba(79,70,229,.7);
+  }
+  .qr-frame img{display:block;width:196px;height:196px;border-radius:14px;background:#fff;object-fit:contain}
+  .qr-note{margin-top:12px;text-align:center;font-size:.73rem;font-weight:600;color:var(--muted-2)}
+  .support-body h2{font-size:clamp(1.5rem,3vw,1.85rem);font-weight:800;letter-spacing:-.03em}
+  .support-copy{margin-top:12px;font-size:.98rem;line-height:1.7;color:var(--muted);max-width:48ch}
+  .upi{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    max-width:370px;margin-top:22px;padding:10px 10px 10px 16px;
+    background:#f8faff;border:1px solid #e2e8f0;border-radius:14px;
+  }
+  .upi-label{display:block;font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8}
+  .upi-id{display:block;margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.95rem;font-weight:700;color:#1e293b}
+  .copy-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fff;border:1px solid #dbe3f3;border-radius:10px;padding:9px 12px;
+    font-size:.8rem;font-weight:700;color:#4f46e5;cursor:pointer;
+    transition:background-color .2s,border-color .2s,transform .15s;
+  }
+  .copy-btn svg{width:14px;height:14px}
+  .copy-btn:hover{background:#eef2ff;border-color:#c7d2fe}
+  .copy-btn:active{transform:scale(.97)}
+  .support-note{margin-top:14px;font-size:.81rem;line-height:1.6;color:var(--muted-2)}
+
+  .faq{max-width:780px;margin:0 auto;display:grid;gap:12px}
+  .faq-item{
+    background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:var(--shadow-sm);
+    transition:border-color .25s ease,box-shadow .25s ease,background .25s ease;
+  }
+  .faq-item[open]{border-color:#d8d2fb;background:linear-gradient(180deg,#fff,#fbfaff);box-shadow:0 18px 36px -28px rgba(79,70,229,.5)}
+  .faq-item summary{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:18px 20px;cursor:pointer;list-style:none;
+    font-size:.97rem;font-weight:700;color:#1e293b;transition:color .2s;
+  }
+  .faq-item summary::-webkit-details-marker{display:none}
+  .faq-item summary:hover{color:#4338ca}
+  .faq-icon{position:relative;width:24px;height:24px;border-radius:50%;background:var(--grad);flex:none;transition:transform .3s ease}
+  .faq-icon::before,.faq-icon::after{
+    content:"";position:absolute;top:50%;left:50%;width:10px;height:2px;border-radius:2px;background:#fff;
+    transform:translate(-50%,-50%);
+  }
+  .faq-icon::after{transform:translate(-50%,-50%) rotate(90deg);transition:transform .3s ease,opacity .3s ease}
+  .faq-item[open] .faq-icon{transform:rotate(180deg)}
+  .faq-item[open] .faq-icon::after{transform:translate(-50%,-50%) rotate(0);opacity:0}
+  .faq-answer{padding:0 20px 20px;font-size:.92rem;line-height:1.72;color:var(--muted);max-width:70ch}
+
+  .site-footer{position:relative;border-top:1px solid var(--line);background:#fff;padding:44px 0 28px}
+  .site-footer::before{content:"";position:absolute;top:-1px;left:0;right:0;height:3px;background:var(--grad);opacity:.9}
+  .footer-top{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid #eef2f8}
+  .footer-brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+  .footer-brand .brand-mark{width:36px;height:36px;border-radius:11px}
+  .footer-brand .brand-mark svg{width:20px;height:20px}
+  .footer-brand strong{display:block;font-family:var(--font-display);font-size:.92rem;font-weight:700;color:var(--ink);line-height:1.2}
+  .footer-brand small{display:block;font-size:.63rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);margin-top:3px}
+  .footer-links{display:flex;flex-wrap:wrap;gap:14px 24px}
+  .footer-links a{font-size:.86rem;font-weight:600;color:#64748b;text-decoration:none;transition:color .2s}
+  .footer-links a:hover{color:var(--violet)}
+  .footer-bottom{padding-top:22px;text-align:center;font-size:.84rem;line-height:1.8;color:#64748b}
+  .footer-bottom .sep{color:#cbd5e1;margin:0 9px}
+  .footer-bottom strong{color:#111;font-weight:600}
+
+  .toast{
+    position:fixed;left:50%;bottom:28px;z-index:200;
+    transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:#0f172a;color:#fff;border:1px solid rgba(255,255,255,.12);
+    padding:12px 18px;border-radius:12px;font-size:.86rem;font-weight:600;
+    box-shadow:0 22px 44px -18px rgba(15,23,42,.6);
+    transition:opacity .3s ease,transform .3s ease;max-width:calc(100% - 32px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media (max-width:980px){
+    .hero-grid{grid-template-columns:1fr;gap:50px;text-align:center}
+    .hero-lead{margin-left:auto;margin-right:auto}
+    .hero-actions,.hero-meta,.trust{justify-content:center}
+    .hero-visual{max-width:440px;margin:0 auto;width:100%}
+    .hero-shot{margin:0 auto}
+    .privacy-content{max-width:640px}
+  }
+  @media (max-width:900px){
+    :root{--header-h:64px}
+    .header-inner{height:64px}
+    .menu-toggle{display:flex}
+    .nav{
+      position:fixed;top:calc(var(--header-h) + 10px);left:16px;right:16px;z-index:99;
+      flex-direction:column;align-items:stretch;gap:4px;
+      background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;
+      box-shadow:0 26px 50px -22px rgba(15,23,42,.4);
+      opacity:0;visibility:hidden;transform:translateY(-10px);
+      transition:opacity .22s ease,transform .22s ease,visibility .22s;
+    }
+    .nav.open{opacity:1;visibility:visible;transform:translateY(0)}
+    .nav a:not(.btn){padding:12px 14px;border-radius:10px;font-size:.95rem}
+    .nav a:not(.btn)::after{display:none}
+    .nav a:not(.btn):hover,.nav a:not(.btn).active{background:#f5f3ff;color:var(--violet)}
+    .nav .btn{margin-top:8px;width:100%}
+  }
+  @media (max-width:720px){
+    .section{padding:68px 0}
+    .section-head{margin-bottom:38px}
+    .hero{padding:56px 0 72px}
+    .hero h1{font-size:clamp(2.5rem,10.5vw,3.4rem)}
+    .hero-actions{flex-direction:column;align-items:stretch;max-width:340px;margin-left:auto;margin-right:auto}
+    .hero-actions .btn{width:100%}
+    .support-card{grid-template-columns:1fr;gap:30px;padding:30px 24px;text-align:center}
+    .qr-frame{margin:0 auto}
+    .support-copy{margin-left:auto;margin-right:auto}
+    .upi{margin-left:auto;margin-right:auto;text-align:left}
+    .footer-top{justify-content:center;text-align:center}
+    .footer-links{justify-content:center}
+  }
+  @media (max-width:560px){
+    .container{padding:0 18px}
+    .step{padding:22px}
+    .pro-tip{padding:14px 16px;font-size:.87rem;margin-bottom:30px}
+    .support-card{padding:26px 20px}
+    .qr-frame img{width:170px;height:170px}
+    .footer-bottom{font-size:.8rem}
+    .hero-meta{gap:8px 14px}
+    .trust{gap:10px 16px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+    .js .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="top">
+  <div class="container header-inner">
+    <a class="brand" href="#top" aria-label="Attendance Manager, ERP ka chacha, back to top">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4.5" width="18" height="16" rx="3"></rect>
+          <path d="M3 9.5h18"></path>
+          <path d="M8 2.5v4"></path>
+          <path d="M16 2.5v4"></path>
+          <path d="m8.5 14.6 2.2 2.2 4.8-4.8"></path>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>Attendance Manager</strong>
+        <small>ERP ka chacha</small>
+      </span>
+    </a>
+
+    <nav class="nav" id="primary-nav" aria-label="Primary">
+      <a href="#key-features">Key Features</a>
+      <a href="#install">Install</a>
+      <a href="#support">Support</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-primary btn-sm" href="./attendance-manager-v1.1.zip" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+        </svg>
+        Download
+      </a>
+    </nav>
+
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="primary-nav" aria-expanded="false" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="hero-badge reveal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path>
+            <circle cx="12" cy="12" r="3.2"></circle>
+          </svg>
+          Free forever &middot; made by a student, for students
+        </span>
+
+        <h1 class="reveal">Attendance <span class="grad">Manager</span></h1>
+        <p class="tagline reveal">Never worry about attendance again</p>
+        <p class="hero-lead reveal">A tiny Chrome extension that reads your college ERP, does the bunker math, and tells you exactly how many classes you can skip &mdash; before it becomes a problem.</p>
+
+        <div class="hero-actions reveal">
+          <a class="btn btn-primary btn-lg" href="./attendance-manager-v1.1.zip" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+            </svg>
+            DOWNLOAD EXTENSION
+          </a>
+          <a class="btn btn-ghost btn-lg" href="#install">See how it works</a>
+        </div>
+
+        <div class="hero-meta reveal">
+          <span>v1.1</span>
+          <span>Chrome, Edge &amp; Brave</span>
+          <span>2-minute install</span>
+        </div>
+
+        <ul class="trust reveal">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle><path d="m8.5 12.2 2.4 2.4 4.6-4.8"></path>
+            </svg>
+            100% local data
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path>
+            </svg>
+            No sign-up
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z"></path>
+            </svg>
+            Free forever
+          </li>
+        </ul>
+      </div>
+
+      <div class="hero-visual reveal">
+        <img class="hero-shot" src="./extension-shot.png" alt="Attendance Manager extension dashboard screenshot" width="517" height="722" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="key-features">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Key Features</span>
+        <h2>Serious features. Zero effort from you.</h2>
+        <p>Everything the extension quietly handles while you get on with the semester.</p>
+      </div>
+
+      <div class="pro-tip reveal" role="note">
+        💡 <strong>Pro Tip:</strong> Click the ⚙️ Settings icon in the top right corner of the extension to explore advanced features like custom attendance targets, disputed absence management, and more.
+      </div>
+
+      <div class="key-grid" data-stagger>
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">01</span>
+          <div class="key-icon k-blue" aria-hidden="true">🚀</div>
+          <h3>Background Auto-Sync</h3>
+          <p>Syncs with your college ERP automatically every 50 minutes in the background. No manual refreshing needed.</p>
+        </article>
+
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">02</span>
+          <div class="key-icon k-violet" aria-hidden="true">🔔</div>
+          <h3>Smart Notifications</h3>
+          <p>Get instant Chrome alerts if you are marked absent or if your attendance drops below the target.</p>
+        </article>
+
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">03</span>
+          <div class="key-icon k-amber" aria-hidden="true">🧮</div>
+          <h3>Bunker Calculator</h3>
+          <p>Exactly know how many classes you can skip (bunk) without falling below the 75% criteria.</p>
+        </article>
+
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">04</span>
+          <div class="key-icon k-pink" aria-hidden="true">🛡️</div>
+          <h3>Disputed Absences</h3>
+          <p>Mark proxy or mistaken absences as 'Disputed'. The calculator will automatically ignore them.</p>
+        </article>
+
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">05</span>
+          <div class="key-icon k-teal" aria-hidden="true">🎯</div>
+          <h3>Per-Subject Targets</h3>
+          <p>Set custom attendance goals for different subjects, not just a default 75%.</p>
+        </article>
+
+        <article class="key-card reveal">
+          <span class="key-num" aria-hidden="true">06</span>
+          <div class="key-icon k-indigo" aria-hidden="true">🔒</div>
+          <h3>100% Privacy First</h3>
+          <p>All your data stays securely on your laptop. Zero backend, zero data collection.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Installation</span>
+        <h2>Up and running in under two minutes</h2>
+        <p>No Chrome Web Store approval, no account, no drama. Just four steps.</p>
+      </div>
+
+      <div class="steps" data-stagger>
+        <article class="step reveal">
+          <div class="num" aria-hidden="true">1</div>
+          <h3>Download the ZIP</h3>
+          <p>Hit the download button. A file named <span class="code">attendance-manager-v1.1.zip</span> lands in your Downloads folder.</p>
+        </article>
+
+        <article class="step reveal">
+          <div class="num" aria-hidden="true">2</div>
+          <h3>Extract it</h3>
+          <p>Right-click the ZIP and choose Extract All on Windows, or just double-click it on Mac. You should see a folder with <span class="code">manifest.json</span> inside.</p>
+        </article>
+
+        <article class="step reveal">
+          <div class="num" aria-hidden="true">3</div>
+          <h3>Open chrome://extensions</h3>
+          <p>Paste <span class="code">chrome://extensions</span> into a new tab in Chrome, Edge or Brave, then switch on <strong>Developer mode</strong> in the top-right corner.</p>
+        </article>
+
+        <article class="step reveal">
+          <div class="num" aria-hidden="true">4</div>
+          <h3>Load Unpacked</h3>
+          <p>Click <strong>Load unpacked</strong> and select the extracted folder &mdash; not the ZIP itself. Pin the extension, open your ERP once, and you are done.</p>
+        </article>
+      </div>
+
+      <div class="tip reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 18h6"></path>
+          <path d="M10 21h4"></path>
+          <path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .9 1.6l.1.5h5l.1-.5c.1-.6.4-1.2.9-1.6A6 6 0 0 0 12 3Z"></path>
+        </svg>
+        <span>Loading the ZIP itself will fail. Extract it first, then point Chrome at the folder that contains <strong>manifest.json</strong>.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="privacy">
+    <div class="container">
+      <div class="privacy-panel reveal">
+        <div class="privacy-content">
+          <span class="eyebrow eyebrow-dark">Privacy Notice</span>
+          <div class="lock-tile" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="10" width="16" height="10.5" rx="2.5"></rect>
+              <path d="M8 10V7.5a4 4 0 0 1 8 0V10"></path>
+              <path d="M12 14v2.5"></path>
+            </svg>
+          </div>
+          <h2>Your attendance, your device, your business</h2>
+          <p class="privacy-statement">No backend. All your data stays on your laptop. We don't collect anything.</p>
+          <ul class="privacy-chips">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4 4 10-10"></path></svg>
+              No backend
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4 4 10-10"></path></svg>
+              No analytics
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4 4 10-10"></path></svg>
+              No account
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-soft" id="support">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Support</span>
+        <h2>Support the chacha</h2>
+        <p>The extension is free and always will be. If it saved you from one detention, you can say thanks.</p>
+      </div>
+
+      <div class="support-card reveal">
+        <div>
+          <div class="qr-frame">
+            <img src="./qr.jpg" alt="UPI QR code for erpkachacha@ptyes" loading="lazy" width="855" height="837">
+          </div>
+          <p class="qr-note">Scan with any UPI app</p>
+        </div>
+
+        <div class="support-body">
+          <h2>Buy chacha a coffee</h2>
+          <p class="support-copy">If you like this extension, you can treat me to a coffee. Totally optional.</p>
+
+          <div class="upi">
+            <div>
+              <span class="upi-label">UPI ID</span>
+              <span class="upi-id">erpkachacha@ptyes</span>
+            </div>
+            <button class="copy-btn" id="copy-upi" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="12" height="12" rx="2.5"></rect>
+                <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path>
+              </svg>
+              Copy
+            </button>
+          </div>
+
+          <p class="support-note">Scan the QR or copy the UPI ID above. GPay, PhonePe, Paytm and every other UPI app works.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">FAQ</span>
+        <h2>Questions, answered</h2>
+        <p>The stuff people usually ask before installing.</p>
+      </div>
+
+      <div class="faq" data-stagger>
+        <details class="faq-item reveal" open>
+          <summary>
+            Is Attendance Manager really free?
+            <span class="faq-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="faq-answer">Yes, completely. No ads, no paywall, no premium tier, no hidden catch. If it saves you from a detention you can buy me a coffee, but that is genuinely optional.</div>
+        </details>
+
+        <details class="faq-item reveal">
+          <summary>
+            Do I need to install it from the Chrome Web Store?
+            <span class="faq-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="faq-answer">No. For now it is distributed as a ZIP and installed manually through Load Unpacked. It takes about a minute and works in Chrome, Edge and Brave. The steps above walk you through it.</div>
+        </details>
+
+        <details class="faq-item reveal">
+          <summary>
+            Where is my attendance data stored?
+            <span class="faq-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="faq-answer">Entirely on your laptop, inside your browser's local extension storage. Nothing is uploaded anywhere, there is no backend, no analytics and no account. Uninstall the extension and the data goes with it.</div>
+        </details>
+
+        <details class="faq-item reveal">
+          <summary>
+            What happens when the college ERP changes its layout?
+            <span class="faq-icon" aria-hidden="true"></span>
+          </summary>
+          <div class="faq-answer">Because it reads the ERP page directly, a major ERP update can temporarily break the sync. Download the latest ZIP and reinstall with Load Unpacked. If it still looks off, ping me and I will patch it as soon as I can.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <a class="footer-brand" href="#top" aria-label="Back to top">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4.5" width="18" height="16" rx="3"></rect>
+            <path d="M3 9.5h18"></path>
+            <path d="M8 2.5v4"></path>
+            <path d="M16 2.5v4"></path>
+            <path d="m8.5 14.6 2.2 2.2 4.8-4.8"></path>
+          </svg>
+        </span>
+        <span>
+          <strong>Attendance Manager</strong>
+          <small>ERP ka chacha</small>
+        </span>
+      </a>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="#key-features">Key Features</a>
+        <a href="#install">Install</a>
+        <a href="#support">Support</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </div>
+    <p class="footer-bottom">
+      Made by <strong>Yash Bhatnagar</strong><span class="sep">|</span>KIET CSE 2030
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var header = document.querySelector(".site-header");
+  var nav = document.getElementById("primary-nav");
+  var toggle = document.getElementById("menu-toggle");
+  var toast = document.getElementById("toast");
+  var toastTimer;
+
+  function onScroll() {
+    if (!header) return;
+    header.classList.toggle("scrolled", window.scrollY > 8);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  function closeMenu() {
+    if (!nav || !toggle) return;
+    nav.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open menu");
+  }
+
+  if (toggle && nav) {
+    toggle.addEventListener("click", function () {
+      var isOpen = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "Open menu" : "Close menu");
+      nav.classList.toggle("open", !isOpen);
+    });
+
+    nav.querySelectorAll("a").forEach(function (link) {
+      link.addEventListener("click", closeMenu);
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && nav.classList.contains("open")) {
+        closeMenu();
+        toggle.focus();
+      }
+    });
+
+    var desktop = window.matchMedia("(min-width: 901px)");
+    var handleDesktop = function (event) {
+      if (event.matches) closeMenu();
+    };
+    if (desktop.addEventListener) desktop.addEventListener("change", handleDesktop);
+    else if (desktop.addListener) desktop.addListener(handleDesktop);
+  }
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () {
+      toast.classList.remove("show");
+    }, 2600);
+  }
+
+  var copyButton = document.getElementById("copy-upi");
+  var upiId = "erpkachacha@ptyes";
+
+  function fallbackCopy(text) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "-1000px";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    var copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (error) {
+      copied = false;
+    }
+    document.body.removeChild(area);
+    return copied;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () {
+        return true;
+      }).catch(function () {
+        return fallbackCopy(text);
+      });
+    }
+    return Promise.resolve(fallbackCopy(text));
+  }
+
+  if (copyButton) {
+    copyButton.addEventListener("click", function () {
+      copyText(upiId).then(function (ok) {
+        showToast(ok ? "UPI ID copied. Thank you!" : "Copy failed. UPI ID: " + upiId);
+      });
+    });
+  }
+
+  document.querySelectorAll(".faq-item").forEach(function (item) {
+    item.addEventListener("toggle", function () {
+      if (!item.open) return;
+      document.querySelectorAll(".faq-item[open]").forEach(function (other) {
+        if (other !== item) other.open = false;
+      });
+    });
+  });
+
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var revealItems = document.querySelectorAll(".reveal");
+
+  document.querySelectorAll("[data-stagger]").forEach(function (group) {
+    group.querySelectorAll(":scope > .reveal").forEach(function (item, index) {
+      item.style.transitionDelay = Math.min(index * 70, 350) + "ms";
+    });
+  });
+
+  document.querySelectorAll(".hero-copy > .reveal").forEach(function (item, index) {
+    item.style.transitionDelay = index * 90 + "ms";
+  });
+
+  var heroVisual = document.querySelector(".hero-visual");
+  if (heroVisual) heroVisual.style.transitionDelay = "260ms";
+
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    revealItems.forEach(function (item) {
+      item.classList.add("in");
+    });
+  } else {
+    var revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+
+    revealItems.forEach(function (item) {
+      revealObserver.observe(item);
+    });
+  }
+
+  var navLinks = Array.prototype.slice.call(
+    document.querySelectorAll('.nav a[href^="#"]:not(.btn)')
+  );
+
+  if (navLinks.length && "IntersectionObserver" in window) {
+    var sections = navLinks.map(function (link) {
+      return document.querySelector(link.getAttribute("href"));
+    }).filter(Boolean);
+
+    var spy = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        navLinks.forEach(function (link) {
+          var active = link.getAttribute("href") === "#" + entry.target.id;
+          link.classList.toggle("active", active);
+          if (active) link.setAttribute("aria-current", "location");
+          else link.removeAttribute("aria-current");
+        });
+      });
+    }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+
+    sections.forEach(function (section) {
+      spy.observe(section);
+    });
+  }
+})();
+</script>
+</body>
+</html>
